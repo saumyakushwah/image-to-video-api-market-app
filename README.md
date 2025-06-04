@@ -188,5 +188,5 @@ The app uses **MagicAPI** endpoints for the following operations:
 
 ## Live Demo
 
-You can try out ResumeCraft live here:  
+You can try out the app live here:  
 🔗 [https://image-to-video-api-market-app.vercel.app/](https://image-to-video-api-market-app.vercel.app/)
