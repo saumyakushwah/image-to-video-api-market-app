@@ -1,6 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎬 LoRA AI Video Generator
 
-## Getting Started
+Generate stylized AI videos from your images using LoRA-powered fine-tuning and natural language prompts.
+
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+
+## 🚀 Getting Started
+
+### Project Dependencies
+
+This project uses [pnpm](https://pnpm.js.org/) as its package manager.
+
+### Installation
+
+To install `pnpm` globally, run the following command:
+
+```bash
+npm install -g pnpm
+```
+
+### Usage
+
+After installing pnpm, you can install project dependencies using:
+
+```bash
+pnpm install
+```
+
+### Alternative Package Managers
+
+If you prefer to use `npm` or `yarn` instead of `pnpm`, you can delete the node_modules folder and the package-lock.json file (if it exists), and then run the following command to install the dependencies using your preferred package manager:
+
+```bash
+npm install
+# or
+yarn install
+```
+
+Using pnpm is recommended for its fast and disk space-efficient installation of packages.
+
+### Running dev server
 
 First, run the development server:
 
@@ -18,19 +56,137 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## ✨ Features
 
-To learn more about Next.js, take a look at the following resources:
+This app offers a smooth and intuitive experience with the following features:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Upload an image (drag-and-drop or file picker)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Add a creative text prompt
 
-## Deploy on Vercel
+- Customize generation settings: model, resolution, aspect ratio, frames, LoRA styles, and advanced parameters
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Uses MagicAPI for AI video generation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Real-time status updates and progress polling
+
+- Local history panel to replay and download past videos
+
+- Responsive and modern UI with TailwindCSS
+
+---
+## 🛠 Tech Stack
+
+- Next.js (App Router)
+
+- TailwindCSS and Shadcn/ui for styling
+
+- TypeScript for code safety & typing
+
+- MagicAPI for AI image & video generation
+
+- LocalStorage for storing history and API key
+
+---
+
+## 📂 Folder Structure
+
+.
+
+├── app/
+
+│ └── page.tsx # Main page with upload & generation logic
+
+├── components/
+
+│ └── HistoryPanel.tsx # Displays previously generated videos with playback
+
+│ └── ImageUploader.tsx # Image upload UI
+
+│ └── GenerationForm.tsx # Form for prompt and settings
+
+├── lib/
+
+│ ├── api.ts # API calls: upload, status, generate video
+
+│ └── utils.ts # Constants, utility functions, classnames helper
+
+---
+
+## 🔌 API Integration
+
+The app uses **MagicAPI** endpoints for the following operations:
+
+### 🖼️ Image Upload
+
+**POST**  
+`https://api.magicapi.dev/api/v1/magicapi/image-upload/upload`
+
+### 📊 Status Check
+
+**GET**  
+`https://prod.api.market/api/v1/magicapi/wan-text-to-image/image-to-video/status/{uploadId}`
+
+### 🎥 Generate Video
+
+**POST**  
+`https://prod.api.market/api/v1/magicapi/wan-text-to-image/image-to-video/run`
+
+> **Note:** All API calls require the header  
+> `"x-magicapi-key": your_api_key`
+
+---
+
+## 📝 Usage
+
+1. **Upload an image** (drag & drop or click to select).
+2. **Enter a descriptive prompt.**
+3. **Choose your configuration:**
+   - Model
+   - Resolution
+   - Aspect Ratio
+   - Frames
+   - LoRA Style
+4. **Adjust advanced options (optional):**
+   - Sample Steps
+   - Guidance Scale
+   - LoRA Model Strength
+   - LoRA CLIP Strength
+5. **Click "Generate Video"** to start.
+6. **Watch progress** in real-time.
+7. **View generated videos** in the **history panel**.
+   - Replay or download videos anytime.
+
+---
+
+## ⚙️ Configuration Fields
+
+| Field                | Options / Range                         | Default               |
+|----------------------|------------------------------------------|------------------------|
+| **Model**            | `1.3B`, `14B`                            | `14B`                  |
+| **Resolution**       | `480p`, `720p`                           | `480p`                 |
+| **Aspect Ratio**     | `auto`, `16:9`, `9:16`, `1:1`            | `16:9`                 |
+| **Frames**           | `17`, `33`, `49`, `65`, `81`            | `33`                   |
+| **LoRA Style**       | `Wan Flat Color v2`, `360 Effect`, `Aging Effect`, `Baby Style` | `Wan Flat Color v2` |
+| **Sample Steps**     | `1` to `60`                              | `30`                   |
+| **Guidance Scale**   | `0.0` to `10.0`                          | `5.0`                  |
+| **LoRA Model Strength** | `0.0` to `2.0`                       | `1.0`                  |
+| **LoRA CLIP Strength**  | `0.0` to `2.0`                       | `1.0`                  |
+
+---
+
+## 🖼 History Panel
+
+- Displays **past generated videos** with relative timestamps (e.g., _"5 mins ago"_)
+- **Play / Pause controls** for preview
+- **Carousel-based navigation** for scrolling through history
+- Data is **persisted in `localStorage`**
+
+---
+
+## Live Demo
+
+You can try out ResumeCraft live here:  
+🔗 [https://image-to-video-api-market-app.vercel.app/](https://image-to-video-api-market-app.vercel.app/)

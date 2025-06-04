@@ -12,12 +12,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import HistoryPanel from "@/components/HistoryPanel";
 import GenerationForm from "@/components/GenerationForm";
 import { DownloadIcon } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 export type GenerationFormData = {
   model: "1.3B" | "14B";
   resolution: "480p" | "720p";
   aspect_ratio: "auto" | "16:9" | "9:16" | "1:1";
-  frames: "17" | "33" | "49" | "65" | "81";
+  frames: 17 | 33 | 49 | 65 | 81;
   lora_style: string;
   lora_strength_model: number; // 0.0 to 2.0
   lora_strength_clip: number; // 0.0 to 2.0
@@ -49,11 +50,12 @@ export default function Home() {
   const [userPrompt, setUserPrompt] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [error, setError] = useState("");
+  // const [delayTime, setDelayTime] = useState<number>(0);
   const [formData, setFormData] = useState<GenerationFormData>({
     model: "1.3B",
     resolution: "720p",
     aspect_ratio: "auto",
-    frames: "17",
+    frames: 17,
     lora_style: "",
     lora_strength_model: 1.0,
     lora_strength_clip: 1.0,
@@ -89,10 +91,15 @@ export default function Home() {
 
     try {
       const res = await uploadImage(file, apiKey);
-      setImageUrl(res.url);
-      setStatus("uploaded");
-    } catch {
-      setError("Upload failed.");
+
+      if (res.error) {
+        setStatus("error");
+        setError(res.error);
+      } else {
+        setImageUrl(res.url);
+        setStatus("uploaded");
+      }
+    } catch () {
       setStatus("error");
     }
   };
@@ -114,9 +121,9 @@ export default function Home() {
         formData
       );
       setUploadId(result.id);
+      // setDelayTime(result.delayTime);
       pollStatus(result.id);
-    } catch {
-      setError("Video generation failed to start");
+    } catch () {
       setStatus("error");
     }
   };
@@ -205,6 +212,21 @@ export default function Home() {
               Status: {status.replace(/_/g, " ")}
             </p>
           )}
+          {status === "error" && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {["generating", "in_queue", "in_progress", "processing"].includes(
+            status
+          ) && (
+            <div className="mt-2">
+              <Progress className="h-2 animate-pulse" />
+              <p className="text-xs text-muted-foreground text-center mt-1">
+                Generating video…
+              </p>
+            </div>
+          )}
           <GenerationForm
             userPrompt={userPrompt}
             setUserPrompt={setUserPrompt}
@@ -232,9 +254,9 @@ export default function Home() {
                 <source src={videoUrl} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
-              <p className="text-sm text-muted-foreground mb-2">
-                Generated in 31.5 seconds
-              </p>
+              {/* <p className="text-sm text-muted-foreground mb-2">
+                Generated in {(delayTime / 1000).toFixed(1)} seconds
+              </p> */}
               <Button
                 // className="w-full"
                 onClick={() => window.open(videoUrl, "_blank")}

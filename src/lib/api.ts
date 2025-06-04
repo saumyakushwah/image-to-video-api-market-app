@@ -18,7 +18,7 @@ export async function uploadImage(file: File, apiKey: string) {
     requestOptions
   ).then((response) => response.json());
 
-  if (!res.url) throw new Error("Upload failed");
+  // if (!res.url) throw new Error("Upload failed");
 
   return res; // { url: string }
 }

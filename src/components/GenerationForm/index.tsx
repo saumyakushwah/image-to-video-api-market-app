@@ -76,8 +76,10 @@ export default function GenerationForm({
             <Label className="mb-1">{label}</Label>
             <Select
               onValueChange={(value) => {
-                const parsedValue =
-                  typeof options[0] === "number" ? Number(value) : value;
+                const numberKeys = ["frames"];
+                const parsedValue = numberKeys.includes(key)
+                  ? Number(value)
+                  : value;
 
                 setFormData((prev) => {
                   if (key === "lora_style") {
