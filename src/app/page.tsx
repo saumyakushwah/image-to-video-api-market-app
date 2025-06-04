@@ -99,7 +99,8 @@ export default function Home() {
         setImageUrl(res.url);
         setStatus("uploaded");
       }
-    } catch () {
+      //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err: unknown) {
       setStatus("error");
     }
   };
@@ -123,7 +124,8 @@ export default function Home() {
       setUploadId(result.id);
       // setDelayTime(result.delayTime);
       pollStatus(result.id);
-    } catch () {
+      //eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err: unknown) {
       setStatus("error");
     }
   };
