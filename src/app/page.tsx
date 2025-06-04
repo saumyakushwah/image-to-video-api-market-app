@@ -7,12 +7,24 @@ import {
   getUploadStatus,
   generateVideoFromImage,
 } from "../lib/api";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import HistoryPanel from "@/components/HistoryPanel";
+import GenerationForm from "@/components/GenerationForm";
+import { DownloadIcon } from "lucide-react";
+
+export type GenerationFormData = {
+  model: "1.3B" | "14B";
+  resolution: "480p" | "720p";
+  aspect_ratio: "auto" | "16:9" | "9:16" | "1:1";
+  frames: "17" | "33" | "49" | "65" | "81";
+  lora_style: string;
+  lora_strength_model: number; // 0.0 to 2.0
+  lora_strength_clip: number; // 0.0 to 2.0
+  sample_steps: number; // 1 to 60
+  sample_guide_scale: number; // 0.0 to 10.0
+  [key: string]: string | number | undefined;
+};
 
 type Status =
   | ""
@@ -30,13 +42,24 @@ type Status =
 
 export default function Home() {
   const [apiKey, setApiKey] = useState("");
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [, setSelectedImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [, setUploadId] = useState("");
   const [status, setStatus] = useState<Status>("");
   const [userPrompt, setUserPrompt] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [error, setError] = useState("");
+  const [formData, setFormData] = useState<GenerationFormData>({
+    model: "1.3B",
+    resolution: "720p",
+    aspect_ratio: "auto",
+    frames: "17",
+    lora_style: "",
+    lora_strength_model: 1.0,
+    lora_strength_clip: 1.0,
+    sample_steps: 30,
+    sample_guide_scale: 5.0,
+  });
 
   useEffect(() => {
     const storedKey = localStorage.getItem("magic_api_key");
@@ -51,25 +74,14 @@ export default function Home() {
     }
   }, []);
 
-  // useEffect(() => {
-  //   if (selectedImage && apiKey) {
-  //     setError("");
-  //     setStatus("uploading");
-  //     setVideoUrl("");
+  const handleImageSelected = async (file: File | null) => {
+    if (!file) {
+      setSelectedImage(null);
+      setImageUrl("");
+      setStatus("");
+      return;
+    }
 
-  //     uploadImage(selectedImage, apiKey)
-  //       .then((res) => {
-  //         setImageUrl(res.url);
-  //         setStatus("uploaded");
-  //       })
-  //       .catch(() => {
-  //         setError("Upload failed.");
-  //         setStatus("error");
-  //       });
-  //   }
-  // }, [selectedImage, apiKey]);
-
-  const handleImageSelected = async (file: File) => {
     setSelectedImage(file);
     setError("");
     setStatus("uploading");
@@ -95,7 +107,12 @@ export default function Home() {
       setError("");
       setStatus("generating");
 
-      const result = await generateVideoFromImage(imageUrl, userPrompt, apiKey);
+      const result = await generateVideoFromImage(
+        imageUrl,
+        userPrompt,
+        apiKey,
+        formData
+      );
       setUploadId(result.id);
       pollStatus(result.id);
     } catch {
@@ -169,85 +186,71 @@ export default function Home() {
   };
 
   return (
-    <main className="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
-      <Card>
-        <CardContent className="py-6 px-4 sm:px-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-center sm:text-left">
-            Image to Video Generator
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 mb-4 text-center sm:text-left">
-            Upload an image, provide a prompt, and generate a short video using
-            MagicAPI.
-          </p>
-
-          <ImageUploader
-            // onImageSelected={setSelectedImage}
-            onImageSelected={handleImageSelected}
-          />
-
-          {selectedImage && (
-            <p className="text-sm text-muted-foreground mt-2 text-center sm:text-left">
-              Selected: {selectedImage.name}
-            </p>
-          )}
-
-          {(status === "uploading" || status === "processing") && (
-            <p className="text-blue-500 mt-4 text-center sm:text-left">
-              Uploading image...
-            </p>
-          )}
-
-          {status === "uploaded" && (
-            <div className="space-y-3 mt-6 sm:flex sm:items-end sm:space-y-0 sm:space-x-4">
-              <Label htmlFor="prompt">Prompt</Label>
-              <Input
-                id="prompt"
-                className="w-full sm:flex-1"
-                value={userPrompt}
-                onChange={(e) => setUserPrompt(e.target.value)}
-                placeholder="e.g. A cat flying through space"
-                disabled={(status as Status) === "generating"}
-              />
-              <Button
-                className="w-full sm:w-auto"
-                onClick={handleGenerateVideo}
-                disabled={
-                  (status as Status) === "generating" || !userPrompt.trim()
-                }
-              >
-                {(status as Status) === "generating"
-                  ? "Generating..."
-                  : "Generate Video"}
-              </Button>
-            </div>
-          )}
-
-          {status === "generating" && !videoUrl && (
-            <p className="text-blue-500 mt-4 text-center sm:text-left">
-              Generating video...
-            </p>
-          )}
-
-          {videoUrl && (
-            <video controls className="w-full rounded border mt-6" playsInline>
-              <source src={videoUrl} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          )}
-
+    <div className="w-full min-h-screen">
+      <section className="text-center px-4 pt-8 pb-4">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
+          LoRA AI Video Generator
+        </h1>
+        <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+          Generate stylized AI videos from your images using LoRA-powered
+          fine-tuning and prompts.
+        </p>
+      </section>
+      <main className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 w-full">
+        <div className="space-y-4">
+          <h2 className="text-xl sm:text-2xl font-semibold">Input</h2>
+          <ImageUploader onImageSelected={handleImageSelected} />
           {status && (
             <p className="text-blue-500 mt-4 text-center sm:text-left capitalize">
               Status: {status.replace(/_/g, " ")}
             </p>
           )}
+          <GenerationForm
+            userPrompt={userPrompt}
+            setUserPrompt={setUserPrompt}
+            status={status}
+            setFormData={setFormData}
+            onGenerate={handleGenerateVideo}
+          />
+
           {status === "failed" && (
-            <Alert variant="destructive" className="mt-4 text-sm sm:text-base">
+            <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-        </CardContent>
-      </Card>
-      <HistoryPanel />
-    </main>
+        </div>
+
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">Output</h2>
+          {videoUrl ? (
+            <>
+              <video
+                controls
+                className="w-full rounded border mb-4"
+                playsInline
+              >
+                <source src={videoUrl} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              <p className="text-sm text-muted-foreground mb-2">
+                Generated in 31.5 seconds
+              </p>
+              <Button
+                // className="w-full"
+                onClick={() => window.open(videoUrl, "_blank")}
+              >
+                Download <DownloadIcon />
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Your output will appear here after generation.
+            </p>
+          )}
+
+          <HistoryPanel />
+        </div>
+      </main>
+    </div>
   );
 }
