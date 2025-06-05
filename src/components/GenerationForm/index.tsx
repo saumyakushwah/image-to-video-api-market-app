@@ -25,6 +25,7 @@ type Props = {
   userPrompt: string;
   setUserPrompt: (prompt: string) => void;
   status: string;
+  formData: GenerationFormData;
   setFormData: Dispatch<SetStateAction<GenerationFormData>>;
   onGenerate: () => void;
 };
@@ -33,6 +34,7 @@ export default function GenerationForm({
   userPrompt,
   setUserPrompt,
   status,
+  formData,
   setFormData,
   onGenerate,
 }: Props) {
@@ -66,6 +68,21 @@ export default function GenerationForm({
           disabled={status === "generating"}
         />
       </div>
+      <div>
+        <Label className="mb-1">Negative Prompt</Label>
+        <Textarea
+          rows={2}
+          value={formData.negative_prompt}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              negative_prompt: e.target.value,
+            }))
+          }
+          placeholder="e.g. blurry, distorted"
+          disabled={status === "generating"}
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         {SELECT_FIELDS.map(({ label, key, options }) => (
@@ -82,11 +99,16 @@ export default function GenerationForm({
                   : value;
 
                 setFormData((prev) => {
-                  if (key === "lora_style") {
+                  if (key === "lora_url") {
+                    if (value === "no_lora") {
+                      return {
+                        ...prev,
+                        lora_url: null,
+                      };
+                    }
                     return {
                       ...prev,
-                      lora_style: value,
-                      lora_url: LORA_STYLE_MAP[value] || "",
+                      lora_url: LORA_STYLE_MAP[value] ?? null,
                     };
                   }
                   return {
@@ -97,14 +119,21 @@ export default function GenerationForm({
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder={options[0]} />
+                <SelectValue
+                  placeholder={label === "LoRA Style" ? "No LoRA" : options[0]}
+                />
               </SelectTrigger>
               <SelectContent>
-                {options.map((opt) => (
-                  <SelectItem key={opt} value={String(opt)}>
-                    {opt}
-                  </SelectItem>
-                ))}
+                <>
+                  {label === "LoRA Style" && (
+                    <SelectItem value="no_lora">No LoRA</SelectItem>
+                  )}
+                  {options.map((opt) => (
+                    <SelectItem key={opt} value={String(opt)}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </>
               </SelectContent>
             </Select>
           </div>

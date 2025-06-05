@@ -82,7 +82,7 @@ export default function HistoryPanel() {
                     key={timestamp + index}
                     className="basis-[calc(100%/1.5)]"
                   >
-                    <div className="relative bg-muted rounded-lg p-4 shadow-sm flex flex-col justify-between min-h-[400px]">
+                    <div className="relative bg-muted rounded-lg p-4 shadow-sm flex flex-col justify-between sm:min-h-[400px]">
                       <span className="absolute top-2 right-2 text-xs text-muted-foreground mt-4 mb-4 pr-4">
                         {timeAgo(timestamp)}
                       </span>
