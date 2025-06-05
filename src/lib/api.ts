@@ -55,16 +55,21 @@ export async function generateVideoFromImage(
     frames: 33,
     prompt,
     image_url: imageUrl,
-    lora_url:
-      "https://dtu1vvf8tvi89.cloudfront.net/wan/i2v_lora/zen_50_epochs.safetensors",
-    lora_strength_model: 1,
-    lora_strength_clip: 1,
+    // lora_url:
+    //   "https://dtu1vvf8tvi89.cloudfront.net/wan/i2v_lora/zen_50_epochs.safetensors",
+    // lora_strength_model: 1,
+    // lora_strength_clip: 1,
     aspect_ratio: "16:9",
     resolution: "480p",
     sample_steps: 30,
   };
 
-  const input = { ...defaultInput, ...formData };
+  const { lora_url, ...restFormData } = formData;
+  const input = {
+    ...defaultInput,
+    ...restFormData,
+    ...(lora_url ? { lora_url } : {}),
+  };
 
   const res = await fetch(
     "https://prod.api.market/api/v1/magicapi/wan-text-to-image/image-to-video/run",

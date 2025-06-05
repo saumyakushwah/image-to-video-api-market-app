@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import ImageUploader from "../components/ImageUploader";
 import {
   uploadImage,
@@ -11,20 +11,32 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import HistoryPanel from "@/components/HistoryPanel";
 import GenerationForm from "@/components/GenerationForm";
-import { DownloadIcon } from "lucide-react";
+import { Code, DownloadIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import APIKeyManager from "@/components/APIKeyManager";
+import { buildCurlCommand } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModeToggle } from "@/components/ModeToggle";
 
 export type GenerationFormData = {
   model: "1.3B" | "14B";
   resolution: "480p" | "720p";
   aspect_ratio: "auto" | "16:9" | "9:16" | "1:1";
   frames: 17 | 33 | 49 | 65 | 81;
-  lora_style: string;
+  lora_url: string | null;
   lora_strength_model: number; // 0.0 to 2.0
   lora_strength_clip: number; // 0.0 to 2.0
   sample_steps: number; // 1 to 60
   sample_guide_scale: number; // 0.0 to 10.0
-  [key: string]: string | number | undefined;
+  sample_shift: number;
+  negative_prompt: string;
+  [key: string]: string | number | null | undefined;
 };
 
 type Status =
@@ -50,31 +62,40 @@ export default function Home() {
   const [userPrompt, setUserPrompt] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [error, setError] = useState("");
+  const [isApiDialogOpen, setIsApiDialogOpen] = useState(false);
   // const [delayTime, setDelayTime] = useState<number>(0);
   const [formData, setFormData] = useState<GenerationFormData>({
     model: "1.3B",
     resolution: "720p",
     aspect_ratio: "auto",
     frames: 17,
-    lora_style: "",
+    lora_url: null,
     lora_strength_model: 1.0,
     lora_strength_clip: 1.0,
     sample_steps: 30,
     sample_guide_scale: 5.0,
+    sample_shift: 8,
+    negative_prompt: "",
   });
+  const [showUploadRes, setShowUploadRes] = useState(false);
+  const [showGenerateRes, setShowGenerateRes] = useState(false);
+  const [showStatusRes, setShowStatusRes] = useState(false);
 
-  useEffect(() => {
-    const storedKey = localStorage.getItem("magic_api_key");
-    if (!storedKey) {
-      const inputKey = window.prompt("Enter your MagicAPI Key");
-      if (inputKey) {
-        localStorage.setItem("magic_api_key", inputKey);
-        setApiKey(inputKey);
-      }
-    } else {
-      setApiKey(storedKey);
-    }
-  }, []);
+  const [uploadJson, setUploadJson] = useState<Record<string, unknown> | null>(
+    null
+  );
+  const [generateJson, setGenerateJson] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  const [statusJson, setStatusJson] = useState<Record<string, unknown> | null>(
+    null
+  );
+
+  const curlPreview = useMemo(() => {
+    if (!imageUrl || !userPrompt || !apiKey) return "";
+    return buildCurlCommand(imageUrl, userPrompt, apiKey, formData);
+  }, [imageUrl, userPrompt, apiKey, formData]);
 
   const handleImageSelected = async (file: File | null) => {
     if (!file) {
@@ -91,6 +112,7 @@ export default function Home() {
 
     try {
       const res = await uploadImage(file, apiKey);
+      setUploadJson(res);
 
       if (res.error) {
         setStatus("error");
@@ -121,6 +143,7 @@ export default function Home() {
         apiKey,
         formData
       );
+      setGenerateJson(result);
       setUploadId(result.id);
       // setDelayTime(result.delayTime);
       pollStatus(result.id);
@@ -137,7 +160,7 @@ export default function Home() {
     const interval = setInterval(async () => {
       try {
         const res = await getUploadStatus(id, apiKey);
-
+        setStatusJson(res);
         setStatus(res.status.toLowerCase() as Status);
 
         if (res.status === "IN_QUEUE" || res.status === "IN_PROGRESS") {
@@ -196,7 +219,12 @@ export default function Home() {
 
   return (
     <div className="w-full min-h-screen">
-      <section className="text-center px-4 pt-8 pb-4">
+      {" "}
+      <div className="flex justify-between items-center my-4 px-4">
+        <ModeToggle />
+        <APIKeyManager onKeyAvailable={setApiKey} />
+      </div>
+      <section className="text-center px-4 pt-4 pb-4">
         <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
           LoRA AI Video Generator
         </h1>
@@ -229,10 +257,22 @@ export default function Home() {
               </p>
             </div>
           )}
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsApiDialogOpen(true)}
+              disabled={!curlPreview}
+              className="cursor-pointer"
+            >
+              <Code className="mr-2 h-4 w-4" /> View API Request
+            </Button>
+          </div>
           <GenerationForm
             userPrompt={userPrompt}
             setUserPrompt={setUserPrompt}
             status={status}
+            formData={formData}
             setFormData={setFormData}
             onGenerate={handleGenerateVideo}
           />
@@ -250,7 +290,7 @@ export default function Home() {
             <>
               <video
                 controls
-                className="w-full rounded border mb-4"
+                className="w-full aspect-video rounded border mb-4"
                 playsInline
               >
                 <source src={videoUrl} type="video/mp4" />
@@ -271,10 +311,108 @@ export default function Home() {
               Your output will appear here after generation.
             </p>
           )}
-
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowUploadRes(true)}
+              disabled={!uploadJson}
+              className="w-full sm:flex-1 cursor-pointer"
+            >
+              <Code className="mr-2 h-4 w-4" />
+              View Upload Response
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowGenerateRes(true)}
+              disabled={!generateJson}
+              className="w-full sm:flex-1 cursor-pointer"
+            >
+              <Code className="mr-2 h-4 w-4" />
+              View Generate Response
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowStatusRes(true)}
+              disabled={!statusJson}
+              className="w-full sm:flex-1 cursor-pointer"
+            >
+              <Code className="mr-2 h-4 w-4" />
+              View Status Response
+            </Button>
+          </div>
           <HistoryPanel />
         </div>
       </main>
+      <Dialog open={isApiDialogOpen} onOpenChange={setIsApiDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl sm:w-full">
+          <DialogHeader>
+            <DialogTitle className="text-left">API Request</DialogTitle>
+            <p className="text-sm text-left text-muted-foreground">
+              The cURL command and JSON payload that will be sent to the API
+            </p>
+          </DialogHeader>
+          <Tabs defaultValue="curl" className="mt-2 sm:mt-4">
+            <TabsList>
+              <TabsTrigger value="curl">cURL Command</TabsTrigger>
+              <TabsTrigger value="json">JSON Payload</TabsTrigger>
+            </TabsList>
+            <TabsContent value="curl">
+              <pre className="min-h-[300px] font-mono whitespace-pre-wrap bg-muted p-4 rounded overflow-x-auto text-sm">
+                {curlPreview}
+              </pre>
+            </TabsContent>
+            <TabsContent value="json">
+              <pre className="min-h-[300px] font-mono whitespace-pre-wrap bg-muted p-4 rounded overflow-x-auto text-sm">
+                {JSON.stringify(
+                  {
+                    input: {
+                      ...formData,
+                      prompt: userPrompt,
+                      image_url: imageUrl,
+                    },
+                  },
+                  null,
+                  2
+                )}
+              </pre>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+      {[
+        {
+          key: "upload",
+          open: showUploadRes,
+          setOpen: setShowUploadRes,
+          title: "Upload Response",
+          content: uploadJson,
+        },
+        {
+          key: "generate",
+          open: showGenerateRes,
+          setOpen: setShowGenerateRes,
+          title: "Generate Response",
+          content: generateJson,
+        },
+        {
+          key: "status",
+          open: showStatusRes,
+          setOpen: setShowStatusRes,
+          title: "Status Poll Response",
+          content: statusJson,
+        },
+      ].map(({ key, open, setOpen, title, content }) => (
+        <Dialog key={key} open={open} onOpenChange={setOpen}>
+          <DialogContent className="sm:max-w-4xl sm:w-full max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-left">{title}</DialogTitle>
+            </DialogHeader>
+            <pre className="text-sm bg-muted p-4 rounded whitespace-pre-wrap">
+              {JSON.stringify(content, null, 2)}
+            </pre>
+          </DialogContent>
+        </Dialog>
+      ))}
     </div>
   );
 }

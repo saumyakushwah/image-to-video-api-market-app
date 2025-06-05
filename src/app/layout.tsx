@@ -1,5 +1,7 @@
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 import { ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -7,7 +9,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -20,7 +22,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Toaster />
+        <ThemeProvider> {children}</ThemeProvider>
+      </body>
     </html>
   );
 }
