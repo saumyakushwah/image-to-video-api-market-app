@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModeToggle } from "@/components/ModeToggle";
 
 export type GenerationFormData = {
   model: "1.3B" | "14B";
@@ -219,10 +220,11 @@ export default function Home() {
   return (
     <div className="w-full min-h-screen">
       {" "}
-      <div className="flex justify-end my-4 px-4">
+      <div className="flex justify-between items-center my-4 px-4">
+        <ModeToggle />
         <APIKeyManager onKeyAvailable={setApiKey} />
       </div>
-      <section className="text-center px-4 pt-8 pb-4">
+      <section className="text-center px-4 pt-4 pb-4">
         <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
           LoRA AI Video Generator
         </h1>
@@ -260,7 +262,7 @@ export default function Home() {
               variant="secondary"
               size="sm"
               onClick={() => setIsApiDialogOpen(true)}
-              disabled={!curlPreview}
+              // disabled={!curlPreview}
               className="cursor-pointer"
             >
               <Code className="mr-2 h-4 w-4" /> View API Request
@@ -288,7 +290,7 @@ export default function Home() {
             <>
               <video
                 controls
-                className="w-full rounded border mb-4"
+                className="w-full aspect-video rounded border mb-4"
                 playsInline
               >
                 <source src={videoUrl} type="video/mp4" />
@@ -314,7 +316,7 @@ export default function Home() {
               variant="outline"
               onClick={() => setShowUploadRes(true)}
               disabled={!uploadJson}
-              className="w-full sm:flex-1"
+              className="w-full sm:flex-1 cursor-pointer"
             >
               <Code className="mr-2 h-4 w-4" />
               View Upload Response
@@ -323,7 +325,7 @@ export default function Home() {
               variant="outline"
               onClick={() => setShowGenerateRes(true)}
               disabled={!generateJson}
-              className="w-full sm:flex-1"
+              className="w-full sm:flex-1 cursor-pointer"
             >
               <Code className="mr-2 h-4 w-4" />
               View Generate Response
@@ -332,7 +334,7 @@ export default function Home() {
               variant="outline"
               onClick={() => setShowStatusRes(true)}
               disabled={!statusJson}
-              className="w-full sm:flex-1"
+              className="w-full sm:flex-1 cursor-pointer"
             >
               <Code className="mr-2 h-4 w-4" />
               View Status Response
@@ -342,14 +344,14 @@ export default function Home() {
         </div>
       </main>
       <Dialog open={isApiDialogOpen} onOpenChange={setIsApiDialogOpen}>
-        <DialogContent className="sm:max-w-4xl sm:w-full">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl sm:w-full">
           <DialogHeader>
-            <DialogTitle>API Request</DialogTitle>
-            <p className="text-sm text-muted-foreground">
+            <DialogTitle className="text-left">API Request</DialogTitle>
+            <p className="text-sm text-left text-muted-foreground">
               The cURL command and JSON payload that will be sent to the API
             </p>
           </DialogHeader>
-          <Tabs defaultValue="curl" className="mt-4">
+          <Tabs defaultValue="curl" className="mt-2 sm:mt-4">
             <TabsList>
               <TabsTrigger value="curl">cURL Command</TabsTrigger>
               <TabsTrigger value="json">JSON Payload</TabsTrigger>
@@ -401,9 +403,9 @@ export default function Home() {
         },
       ].map(({ key, open, setOpen, title, content }) => (
         <Dialog key={key} open={open} onOpenChange={setOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-4xl sm:w-full max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{title}</DialogTitle>
+              <DialogTitle className="text-left">{title}</DialogTitle>
             </DialogHeader>
             <pre className="text-sm bg-muted p-4 rounded whitespace-pre-wrap">
               {JSON.stringify(content, null, 2)}

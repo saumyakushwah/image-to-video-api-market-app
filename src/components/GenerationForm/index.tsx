@@ -172,7 +172,7 @@ export default function GenerationForm({
       </Collapsible>
 
       <Button
-        className="w-full mt-4"
+        className="w-full mt-4 cursor-pointer"
         onClick={onGenerate}
         disabled={["generating", "in_queue", "in_progress"].includes(status)}
       >

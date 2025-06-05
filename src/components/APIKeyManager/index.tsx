@@ -60,7 +60,7 @@ export default function APIKeyManager({
   return (
     <>
       <div
-        className="flex items-center gap-2 cursor-pointer text-sm text-gray-800 hover:text-primary transition"
+        className="flex items-center gap-2 cursor-pointer text-sm hover:text-primary transition"
         onClick={() => {
           setInputKey(apiKey);
           setShowDialog(true);
