@@ -377,36 +377,40 @@ export default function Home() {
           </Tabs>
         </DialogContent>
       </Dialog>
-      <Dialog open={showUploadRes} onOpenChange={setShowUploadRes}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Upload Response</DialogTitle>
-          </DialogHeader>
-          <pre className="text-sm bg-muted p-4 rounded whitespace-pre-wrap">
-            {JSON.stringify(uploadJson, null, 2)}
-          </pre>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={showGenerateRes} onOpenChange={setShowGenerateRes}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generate Response</DialogTitle>
-          </DialogHeader>
-          <pre className="text-sm bg-muted p-4 rounded whitespace-pre-wrap">
-            {JSON.stringify(generateJson, null, 2)}
-          </pre>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={showStatusRes} onOpenChange={setShowStatusRes}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Status Poll Response</DialogTitle>
-          </DialogHeader>
-          <pre className="text-sm bg-muted p-4 rounded whitespace-pre-wrap">
-            {JSON.stringify(statusJson, null, 2)}
-          </pre>
-        </DialogContent>
-      </Dialog>
+      {[
+        {
+          key: "upload",
+          open: showUploadRes,
+          setOpen: setShowUploadRes,
+          title: "Upload Response",
+          content: uploadJson,
+        },
+        {
+          key: "generate",
+          open: showGenerateRes,
+          setOpen: setShowGenerateRes,
+          title: "Generate Response",
+          content: generateJson,
+        },
+        {
+          key: "status",
+          open: showStatusRes,
+          setOpen: setShowStatusRes,
+          title: "Status Poll Response",
+          content: statusJson,
+        },
+      ].map(({ key, open, setOpen, title, content }) => (
+        <Dialog key={key} open={open} onOpenChange={setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+            </DialogHeader>
+            <pre className="text-sm bg-muted p-4 rounded whitespace-pre-wrap">
+              {JSON.stringify(content, null, 2)}
+            </pre>
+          </DialogContent>
+        </Dialog>
+      ))}
     </div>
   );
 }
