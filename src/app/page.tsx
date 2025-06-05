@@ -262,7 +262,7 @@ export default function Home() {
               variant="secondary"
               size="sm"
               onClick={() => setIsApiDialogOpen(true)}
-              // disabled={!curlPreview}
+              disabled={!curlPreview}
               className="cursor-pointer"
             >
               <Code className="mr-2 h-4 w-4" /> View API Request
